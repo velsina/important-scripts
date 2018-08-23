@@ -1,0 +1,108 @@
+---
+- hosts: ENVIRONMENT
+  vars_files:
+      - general_vars.yml
+  tasks:
+  - name: Creates directory
+    file: path=/opt/stuff/ state=directory
+    sudo: true
+
+  - name: add nginx user
+    shell: adduser --system --no-create-home --disabled-login --disabled-password --group {{ nginx_user }}
+    sudo: true
+
+  - name: Ensure the nginx is downloaded
+    get_url: url={{ nginx_url }} dest=/opt/stuff/nginx-{{ nginx_version }}.tar.gz
+    sudo: true
+
+  - name: Ensure the nginx source is extracted
+    command: tar -zxvf /opt/stuff/nginx-{{ nginx_version }}.tar.gz  -C /opt/stuff/
+    sudo: true
+
+  - name: owner change
+    file: path=/opt/stuff/nginx-{{ nginx_version }} owner=root group=root mode=755 state=directory recurse=yes
+    sudo: true
+
+  - name: Ensure the headers_more_nginx is downloaded
+    get_url: url={{ v0_19rc1_url }} dest=/opt/stuff/headers-more-nginx-module-{{ headers_more_nginx }}.tar.gz
+    sudo: true
+
+  - name: Ensure the headers_more_nginx source is extracted
+    command: tar -zxvf /opt/stuff/headers-more-nginx-module-{{ headers_more_nginx }}.tar.gz  -C /opt/stuff/
+    sudo: true
+
+  - name: Ensure the naxsi is downloaded
+    get_url: url={{ naxsi_url }} dest=/opt/stuff/
+    sudo: true
+
+  - name: Ensure the naxsi source is extracted
+    command: unzip  /opt/stuff/naxsi-master.zip -d /opt/stuff/
+    sudo: true
+
+  - name: Creates directory
+    file: path=/opt/nginx/ state=directory
+    sudo: true
+
+  - name: Ensure nginx is installed
+    shell: chdir=/opt/stuff/nginx-{{ nginx_version }}  ./configure --prefix=/opt/nginx --user={{ nginx_user }} --group={{ nginx_user }} --add-module=/opt/stuff/headers-more-nginx-module-{{ headers_more_nginx }} --with-http_ssl_module --with-http_stub_status_module --add-module=/opt/stuff/naxsi-master/naxsi_src/ && make && make install
+    sudo: true
+
+  - name: Ensure the node is downloaded
+    get_url: url={{ node_x64 }} dest=/opt/stuff/node-{{ node_version }}-linux-x64.tar.gz
+    sudo: true
+
+  - name: Ensure the node source is extracted
+    command: tar -zxvf /opt/stuff/node-{{ node_version }}-linux-x64.tar.gz  -C /opt/stuff
+    sudo: true
+
+  - name: mv node folder
+    command: mv /opt/stuff/node-{{ node_version }}-linux-x64 /opt/node
+    sudo: true
+
+  - name: edit bashrc
+    lineinfile: backup=yes state=present dest={{ bashrc }} line='export PATH=$PATH:/opt/node/bin'
+    sudo: true
+
+  - name: edit bashrc
+    lineinfile: backup=yes state=present dest={{ bashrc }} line='export PATH=$PATH:/opt/node/bin/npm'
+    sudo: true
+
+  - name : Create NODE symlink
+    command: ln -s /opt/node/bin/node /usr/bin/ 
+    sudo: true
+
+  - name : Create npm symlink
+    command: ln -s /opt/node/bin/npm /usr/bin/
+    sudo: true
+
+  - name : npm install PM2 --global
+    command: /opt/node/bin/npm install pm2 --global
+    sudo: true 
+
+  - name: Ensure the nginx init file is downloaded
+    get_url: url={{ nginx_init }} dest=/etc/init.d/nginx force=yes mode=755
+    sudo: true
+
+  - name: test lineinfile
+    lineinfile: state=present dest=/etc/init.d/nginx regexp='^NGINXPATH' line='NGINXPATH=/opt/nginx/'
+    sudo: true
+
+  - name: Creates directory
+    file: path=/opt/nginx/logs/archive state=directory
+    sudo: true
+
+  - name: copy nginx logrotate
+    copy: src=nginx dest=/etc/logrotate.d/ mode=0755
+    sudo: true
+
+  - name: take backup of original nginx.conf
+    command: mv /opt/nginx/conf/nginx.conf /opt/nginx/conf/orig_nginx.conf
+    sudo: true
+
+  - name: copy nginx.conf
+    copy: src=nginx.conf dest=/opt/nginx/conf/
+    sudo: true
+
+  - name: copy vhost_templete.conf
+    copy: src=vhosts_templete.conf dest=/opt/nginx/conf/vhosts.conf
+    sudo: true

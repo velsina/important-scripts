@@ -1,0 +1,247 @@
+---
+- hosts: ENVIRONMENT
+  vars_files:
+      - general_vars.yml   
+  sudo: true
+  tasks:
+  - name: edit vimrc and add tabstop value
+    lineinfile: backup=yes state=present dest=/etc/vim/vimrc line='set tabstop=4'
+    sudo: true
+
+  - name: edit nanorc and add tabstop value
+    lineinfile: backup=yes state=present dest=/etc/nanorc line='set tabsize 4'
+    sudo: true
+
+  - name: test lineinfile
+    lineinfile: backup=yes state=present dest={{ sshdconfig }} regexp='^PermitEmptyPasswords' line='PermitEmptyPasswords no'
+    sudo: true
+
+  - name: test lineinfile
+    lineinfile: backup=yes state=present dest={{ sshdconfig }} regexp='^LoginGraceTime' line='LoginGraceTime 2m'
+    sudo: true
+
+  - name: test lineinfile
+    lineinfile: backup=yes state=present dest={{ sshdconfig }} regexp='^PermitRootLogin' line='PermitRootLogin no' 
+    sudo: true
+
+  - name: test lineinfile
+    lineinfile: backup=yes state=present dest={{ sshdconfig }} regexp='^StrictModes' line='StrictModes yes'
+    sudo: true
+
+  - name: test lineinfile
+    lineinfile: backup=yes state=present dest={{ sshdconfig }} regexp='^MaxAuthTries' line='MaxAuthTries 3' 
+    sudo: true
+
+  - name: test lineinfile
+    lineinfile: backup=yes state=present dest={{ sshdconfig }} regexp='^ClientAliveInterval' line='ClientAliveInterval 600'
+    sudo: true
+
+  - name: test lineinfile
+    lineinfile: backup=yes state=present dest={{ sshdconfig }} regexp='^ClientAliveCountMax' line='ClientAliveCountMax 3'
+    sudo: true
+
+  - name: test lineinfile
+    lineinfile: backup=yes state=present dest={{ sshdconfig }} regexp='^Protocol' line='Protocol 2'
+    sudo: true
+
+  - name: test lineinfile
+    lineinfile: backup=yes state=present dest={{ sshdconfig }} regexp='^Ciphers' line='Ciphers aes256-ctr'
+    sudo: true
+
+  - name: test lineinfile
+    lineinfile: backup=yes state=present dest={{ sshdconfig }} regexp='^MACs hmac-sha' line='MACs hmac-sha1,hmac-sha2-256,hmac-sha2-512'
+    sudo: true
+
+  - name: test lineinfile
+    lineinfile: backup=yes state=present dest={{ sshdconfig }} regexp='^PrintLastLog' line='PrintLastLog yes'
+    sudo: true
+
+  - name: test lineinfile
+    lineinfile: backup=yes state=present dest={{ sshdconfig }} regexp='^PasswordAuthentication' line='PasswordAuthentication yes'
+    sudo: true
+
+  - name: test lineinfile
+    lineinfile: backup=yes state=present dest={{ sshdconfig }} regexp='^X11Forwarding' line='X11Forwarding no'
+    sudo: true
+
+  - name: setting ulimit
+    lineinfile: backup=yes state=present dest=/etc/pam.d/common-session line='session required pam_limits.so'
+
+  - lineinfile: state=present dest=/etc/security/limits.conf line='*     soft    nofile          65000'    
+
+  - lineinfile: state=present dest=/etc/security/limits.conf line='*     hard    nofile          65535'
+
+  - name: remove list of packages
+    action: apt update_cache=yes pkg={{item}} state=absent
+    with_items:
+    - plymouth-theme-ubuntu-text
+    - unattended-upgrades
+    - update-manager-core
+    - update-notifier-common
+    sudo: true
+    when: ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu'
+
+  - apt: upgrade=yes update_cache=yes
+
+  - name: Install list of packages
+    action: apt pkg={{item}} state=installed
+    with_items:
+    - ntp
+    - unzip
+    - autoconf 
+    - automake 
+    - build-essential 
+    - ncurses-dev 
+    - libc6-dev 
+    - libcurl4-openssl-dev 
+    - libpcre3-dev 
+    - libtool 
+    - libssl-dev 
+    - libreadline-dev 
+    - libreadline5 
+    - libreadline6 
+    - libreadline6-dev 
+    - libyaml-dev 
+    - libxml2-dev 
+    - libxslt-dev 
+    - openssl 
+    - zlib1g 
+    - zlib1g-dev
+#    - ruby1.9.1
+    - tcl8.5
+    - cloud-init 
+    - s3cmd
+    - awscli
+    - lynx
+    - subversion
+    - git
+    - apache2-utils
+    - acl
+    sudo: true
+    when: ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu'
+
+  - name: yum update
+    yum: name=* state=latest
+    sudo: true
+    when: ansible_distribution == 'CentOS' or ansible_distribution == 'Red Hat Enterprise Linux'
+
+  - name: Install list of packages
+    action: yum state=latest pkg={{item}} state=installed
+    with_items:
+    - ntp
+    - unzip
+    - autoconf
+    - automake
+    - gcc 
+    - gcc-c++ 
+    - kernel-devel
+    - ncurses-devel
+    - glibc-devel
+    - libcurl-devel
+    - openssl-devel
+    - pcre-devel
+    - libtool
+    - openssl-devel
+    - readline-devel
+    - libxml2-devel
+    - libxslt-devel
+    - openssl
+    - cloud-init
+    sudo: true
+    when: ansible_distribution == 'CentOS' or ansible_distribution == 'Red Hat Enterprise Linux'
+
+  - name: cleanup
+    shell: apt-get clean
+    sudo: true
+
+  - name: Add Global ENV
+    lineinfile: "state=present dest=/etc/bash.bashrc regexp='^LC_ALL=' line='export LC_ALL=en_US.utf8'"
+    sudo: true
+    when: ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu'
+
+  - name: Add Global ENV
+    lineinfile: "state=present dest=/etc/bashrc regexp='^LC_ALL=' line='export LC_ALL=en_US.utf8'"
+    sudo: true
+    when: ansible_distribution == 'CentOS' or ansible_distribution == 'Red Hat Enterprise Linux'
+
+  - name: Add Global ENV
+    lineinfile: "state=present dest=/etc/bash.bashrc regexp='^LANG=' line='export LANG=en_US.utf8'"
+    sudo: true
+    when: ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu'
+
+  - name: Add Global ENV
+    lineinfile: "state=present dest=/etc/bashrc regexp='^LANG=' line='export LANG=en_US.utf8'"
+    sudo: true
+    when: ansible_distribution == 'CentOS' or ansible_distribution == 'Red Hat Enterprise Linux'
+
+  - name: Add Global ENV
+    lineinfile: "state=present dest=/etc/bash.bashrc regexp='^LANGUAGE=' line='export LANGUAGE=en_US.utf8'"
+    sudo: true
+    when: ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu'
+
+  - name: Add Global ENV
+    lineinfile: "state=present dest=/etc/bashrc regexp='^LANGUAGE=' line='export LANGUAGE=en_US.utf8'"
+    sudo: true
+    when: ansible_distribution == 'CentOS' or ansible_distribution == 'Red Hat Enterprise Linux'
+
+  - name: add banner
+    lineinfile: "state=present dest=/etc/update-motd.d/00-header regexp='^hostname' line='printf $(hostname) testing'"
+    sudo: true
+    when: ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu'
+
+  - name: add banner
+    lineinfile: "state=present dest=/etc/motd regexp='^hostname' line='printf $(hostname) testing'"
+    sudo: true
+    when: ansible_distribution == 'CentOS' or ansible_distribution == 'Red Hat Enterprise Linux'
+
+  - name: Enforcing strong password
+    lineinfile: "state=present dest=/etc/pam.d/common-password regexp='^pam_permit.so' line='password    required     pam_permit.so try_first_pass minlen=20 difok=20 dcredit=-1 ucredit=-1 lcredit=-1 retry=3'"
+    sudo: true
+    when: ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu'
+  
+  - name: Enforcing strong password
+    lineinfile: "state=present dest=/etc/pam.d/system-auth regexp='^pam_permit.so' line='password    required     pam_permit.so try_first_pass minlen=20 difok=20 dcredit=-1 ucredit=-1 lcredit=-1 retry=3'"
+    sudo: true
+    when: ansible_distribution == 'CentOS' or ansible_distribution == 'Red Hat Enterprise Linux'
+
+  - name: Set Password aging for new users
+    lineinfile: "state=present dest=/etc/login.defs regexp='^PASS_MAX_DAYS' line='PASS_MAX_DAYS   60'"
+    sudo: true
+  - name: Set Password aging for new users
+    lineinfile: "state=present dest=/etc/login.defs regexp='^PASS_MIN_DAYS' line='PASS_MIN_DAYS   0'"
+    sudo: true
+  - name: Set Password aging for new users
+    lineinfile: "state=present dest=/etc/login.defs regexp='^PASS_WARN_AGE' line='PASS_WARN_AGE   10'"
+    sudo: true
+  
+  - name: Setup | create user
+    command: useradd -s /bin/bash -m {{ user1 }} creates=/home/{{ user1 }}
+    sudo: true
+
+  - name: Setup | set user password
+    shell: usermod -p $(echo {{ user1p }} | openssl passwd -1 -stdin) {{ user1 }}
+    sudo: true
+
+  - name: Sudoers | update sudoers file and validate
+    lineinfile: "dest=/etc/sudoers insertafter=EOF regexp='{{ user1 }}' line='{{ user1 }} ALL=(ALL) ALL' state=present"
+    sudo: true
+
+  - name: Set Password aging for existing users
+    command: chage -M 60 -W 10 {{ user1 }}
+    sudo: true
+ 
+  - name: Setup | create user
+    command: useradd -s /bin/bash -m {{ user2 }} creates=/home/{{ user2 }}
+    sudo: true
+
+  - name: Setup | set user password
+    shell: usermod -p $(echo {{ user2p }} | openssl passwd -1 -stdin) {{ user2 }}
+    sudo: true
+
+  - name: Sudoers | update sudoers file and validate
+    lineinfile: "dest=/etc/sudoers insertafter=EOF regexp='{{ user2 }}' line='{{ user2 }} ALL=(ALL) ALL' state=present"
+    sudo: true
+
+  - name: restart ssh
+    service: name=ssh state=restarted
+    sudo: true

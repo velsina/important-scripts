@@ -1,0 +1,16 @@
+/opt/nginx/logs/*.log {
+        olddir /opt/nginx/logs/archive
+        rotate 60
+        daily
+        missingok
+        notifempty
+        create 444 nginx nginx
+        compress
+        compresscmd /bin/bzip2
+        compressext .bz2
+        delaycompress
+        sharedscripts
+        postrotate
+                [ -f /opt/nginx/logs/nginx.pid ] && kill -USR1 `cat /opt/nginx/logs/nginx.pid`
+        endscript
+}
