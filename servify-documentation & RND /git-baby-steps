@@ -1,0 +1,10 @@
+To Create a first git commit
+
+First make a repository in github account 
+
+1. git init     [ To create a repo on local system ]
+2. git checkout -b <new branch name>  [ To create a new branch in the repository ]
+3. git remote add origin <origin's url>  [ This links your local repository to your remote repo ]
+4. git add .   [ This adds the files an folders in the changed repository ]
+5. git commit -m "commit message"  
+6. git push origin <branch name>
